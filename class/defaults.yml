@@ -3,7 +3,6 @@ parameters:
     =_metadata:
       multi_instance: true
       multi_tenant: true
-    create_namespace: true
     namespace: syn-${_instance}
     filesystem:
       path: /data

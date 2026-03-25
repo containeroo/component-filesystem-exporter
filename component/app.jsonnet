@@ -12,5 +12,5 @@ local appPath =
   if project == 'syn' then 'apps' else 'apps-%s' % project;
 
 {
-  ['%s/%s' % [appPath, instance]]: app,
+  ['%s/%s' % [ appPath, instance ]]: app,
 }

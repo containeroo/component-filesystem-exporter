@@ -21,14 +21,6 @@ parameters:
         path: /exports/archive
 ----
 
-== `create_namespace`
-
-[horizontal]
-type:: boolean
-default:: `true`
-
-Whether the component should render the target namespace manifest.
-
 == `namespace`
 
 [horizontal]
@@ -56,13 +48,13 @@ The Kubernetes volume source for the single filesystem mounted by this exporter 
 This parameter is required.
 
 Example:
-+
 [source,yaml]
 ----
 volume:
   persistentVolumeClaim:
     claimName: archive
 ----
+
 The component hardcodes the volume name to `data`, mounts it read-only, and uses `filesystem.path` as the mount path.
 
 == `monitoring_enabled`

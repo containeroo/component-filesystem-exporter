@@ -164,7 +164,7 @@ local service = {
 };
 
 {
-  [if params.create_namespace then '00_namespace']: namespace,
+  '00_namespace': namespace,
   '10_deployment': deployment,
   '20_service': service,
   [if params.monitoring_enabled then '30_monitoring']: monitoring,
