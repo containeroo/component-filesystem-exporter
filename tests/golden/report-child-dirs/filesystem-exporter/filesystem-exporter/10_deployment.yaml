@@ -25,11 +25,12 @@ spec:
         - args:
             - -filesystem.path=/data
             - -filesystem.report-child-dirs=true
+            - -filesystem.scan-concurrency=1
             - -collector.interval=5m
             - -collector.timeout=2m
             - -web.listen-address=:9799
             - -web.metrics-path=/metrics
-          image: ghcr.io/containeroo/filesystem-exporter:v1.2.1
+          image: ghcr.io/containeroo/filesystem-exporter:v1.3.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:

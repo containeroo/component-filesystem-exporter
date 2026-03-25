@@ -8,11 +8,12 @@ parameters:
       exporter:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
-        tag: v1.2.2
+        tag: v1.3.0
     collector:
       interval: 5m
       timeout: 2m
     report_child_dirs: false
+    scan_concurrency: 1
     volume: null
     monitoring_enabled: true
     grafana_dashboard:

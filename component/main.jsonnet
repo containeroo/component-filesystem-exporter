@@ -23,6 +23,7 @@ local appLabels = {
 local exporterArgs = [
   '-filesystem.path=%s' % filesystemPath,
   '-filesystem.report-child-dirs=%s' % std.toString(params.report_child_dirs),
+  '-filesystem.scan-concurrency=%d' % params.scan_concurrency,
   '-collector.interval=%s' % params.collector.interval,
   '-collector.timeout=%s' % params.collector.timeout,
   '-web.listen-address=:9799',
