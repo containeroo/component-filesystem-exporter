@@ -4,8 +4,11 @@ filesystem-exporter is a Commodore component to manage filesystem-exporter.
 
 The component is multi-instance, so you can deploy multiple exporters in one cluster to watch different filesystem mount points.
 The component renders Kubernetes manifests for the exporter `Deployment`, `Service`, `ServiceMonitor`, `PrometheusRule`, and optionally the target `Namespace`.
-The monitoring configuration follows the same shape used by `component-backup-k8up`, including `monitoring_enabled`, `prometheus_name`, namespace monitoring labels, and alert definitions configured through `monitoring_alerts`.
-An optional Grafana dashboard can also be rendered as a labeled `ConfigMap` for sidecar-based dashboard discovery.
-It defaults to mounting an `emptyDir` at `/data` so the component compiles cleanly, but real deployments should override the `volumes` and `volume_mounts` parameters to point at the filesystem that should be scanned.
+It is intentionally opinionated: image, probes, resources, service layout, scrape settings, and alert thresholds are hardcoded in Jsonnet instead of exposed as parameters.
+The exporter image is pinned to `ghcr.io/containeroo/filesystem-exporter:v1.0.0`.
+Monitoring follows the same conventions as `component-backup-k8up`, including namespace monitoring labels and rule labels such as `syn: "true"`.
+An optional Grafana dashboard can be rendered as a labeled `ConfigMap` for sidecar-based dashboard discovery.
+The namespace defaults to `syn-${_instance}`.
+Each instance monitors exactly one mounted root path, so the component requires a single `volume` definition and derives the corresponding read-only `volumeMount` automatically from `filesystem.path`.
 
 See the xref:references/parameters.adoc[parameters] reference for further details.

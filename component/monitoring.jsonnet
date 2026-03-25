@@ -6,9 +6,9 @@ local prometheus = import 'lib/prometheus.libsonnet';
 local inv = kap.inventory();
 local params = inv.parameters.filesystem_exporter;
 local instance = std.get(inv.parameters, '_instance', 'filesystem-exporter');
-local resourceName = if params.name != null then params.name else instance;
-local namespaceName = if params.namespace != null then params.namespace else 'syn-%s' % instance;
-local grafanaDashboardName = if params.grafana_dashboard.name != null then params.grafana_dashboard.name else instance;
+local resourceName = instance;
+local namespaceName = params.namespace;
+local grafanaDashboardName = instance;
 
 local alertlabels = {
   syn: 'true',
@@ -22,21 +22,21 @@ local defaultMonitoringAlerts = {
   FilesystemExporterCollectionFailing: {
     expr: 'max_over_time(filesystem_exporter_collect_success{root_path="%s"}[%s]) < 1' % [
       params.filesystem.path,
-      params.alert_thresholds.collection_failure_window,
+      '10m',
     ],
-    'for': params.alert_thresholds.collection_failure_window,
+    'for': '10m',
     labels: {
       severity: 'warning',
     },
     annotations: {
       summary: 'filesystem-exporter has not completed a successful collection',
-      description: 'filesystem-exporter for {{ $labels.root_path }} has failed every collection for the last %s.' % params.alert_thresholds.collection_failure_window,
+      description: 'filesystem-exporter for {{ $labels.root_path }} has failed every collection for the last 10m.',
     },
   },
   FilesystemExporterCollectionStale: {
     expr: 'time() - filesystem_exporter_collect_timestamp_seconds{root_path="%s"} > %d' % [
       params.filesystem.path,
-      params.alert_thresholds.collection_stale_seconds,
+      900,
     ],
     'for': '5m',
     labels: {
@@ -44,7 +44,7 @@ local defaultMonitoringAlerts = {
     },
     annotations: {
       summary: 'filesystem-exporter metrics are stale',
-      description: 'filesystem-exporter for {{ $labels.root_path }} has not produced a fresh collection timestamp for more than %d seconds.' % params.alert_thresholds.collection_stale_seconds,
+      description: 'filesystem-exporter for {{ $labels.root_path }} has not produced a fresh collection timestamp for more than 900 seconds.',
     },
   },
   FilesystemUsageHigh: {
@@ -53,7 +53,7 @@ local defaultMonitoringAlerts = {
       params.filesystem.path,
       params.filesystem.path,
       params.filesystem.path,
-      formatRatio(params.alert_thresholds.usage_high_ratio),
+      formatRatio(0.1),
     ],
     'for': '15m',
     labels: {
@@ -61,7 +61,7 @@ local defaultMonitoringAlerts = {
     },
     annotations: {
       summary: 'filesystem free space is low',
-      description: 'Less than %s free space remains on {{ $labels.path }}.' % formatPercent(params.alert_thresholds.usage_high_ratio),
+      description: 'Less than %s free space remains on {{ $labels.path }}.' % formatPercent(0.1),
     },
   },
   FilesystemUsageCritical: {
@@ -70,7 +70,7 @@ local defaultMonitoringAlerts = {
       params.filesystem.path,
       params.filesystem.path,
       params.filesystem.path,
-      formatRatio(params.alert_thresholds.usage_critical_ratio),
+      formatRatio(0.05),
     ],
     'for': '15m',
     labels: {
@@ -78,17 +78,16 @@ local defaultMonitoringAlerts = {
     },
     annotations: {
       summary: 'filesystem free space is critically low',
-      description: 'Less than %s free space remains on {{ $labels.path }}.' % formatPercent(params.alert_thresholds.usage_critical_ratio),
+      description: 'Less than %s free space remains on {{ $labels.path }}.' % formatPercent(0.05),
     },
   },
 };
 
-local monitoringAlerts = defaultMonitoringAlerts + params.monitoring_alerts;
-
 local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashboard' % resourceName) {
   metadata+: {
-    labels+: params.grafana_dashboard.labels,
-    annotations+: params.grafana_dashboard.annotations,
+    labels+: {
+      grafana_dashboard: '1',
+    },
   },
   data: {
     ['%s.json' % grafanaDashboardName]: std.manifestJsonEx(
@@ -489,23 +488,17 @@ local serviceMonitor = com.namespaced(namespaceName, {
     labels: {
       'app.kubernetes.io/name': resourceName,
       'app.kubernetes.io/component': 'exporter',
-      prometheus: params.prometheus_name,
-    } + params.service_monitor.labels,
-    annotations: params.service_monitor.annotations,
+      prometheus: 'main',
+    },
     name: resourceName,
   },
   spec: {
     endpoints: [
       {
-        interval: params.service_monitor.interval,
-        port: params.service.port_name,
-        path: params.web.metrics_path,
-      } + (
-        if params.service_monitor.scrape_timeout == null then
-          {}
-        else
-          { scrapeTimeout: params.service_monitor.scrape_timeout }
-      ),
+        interval: '30s',
+        port: 'http-metrics',
+        path: '/metrics',
+      },
     ],
     namespaceSelector: {
       matchNames: [ namespaceName ],
@@ -525,7 +518,7 @@ local alertRules = com.namespaced(namespaceName, {
   metadata: {
     name: resourceName,
     labels: {
-      prometheus: params.prometheus_name,
+      prometheus: 'main',
       role: 'alert-rules',
     },
   },
@@ -534,12 +527,11 @@ local alertRules = com.namespaced(namespaceName, {
       {
         name: '%s.rules' % resourceName,
         rules: [
-          monitoringAlerts[field] {
+          defaultMonitoringAlerts[field] {
             alert: field,
             labels+: alertlabels,
           }
-          for field in std.sort(std.objectFields(monitoringAlerts))
-          if monitoringAlerts[field] != null
+          for field in std.sort(std.objectFields(defaultMonitoringAlerts))
         ],
       },
     ],

@@ -3,7 +3,7 @@ local inv = kap.inventory();
 local params = inv.parameters.filesystem_exporter;
 local instance = std.get(inv.parameters, '_instance', 'filesystem-exporter');
 local argocd = import 'lib/argocd.libjsonnet';
-local namespace = if params.namespace != null then params.namespace else 'syn-%s' % instance;
+local namespace = params.namespace;
 
 local app = argocd.App(instance, namespace);
 

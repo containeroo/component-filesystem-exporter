@@ -6,8 +6,41 @@ local params = inv.parameters.filesystem_exporter;
 local instance = std.get(inv.parameters, '_instance', 'filesystem-exporter');
 local distribution = std.get(std.get(inv.parameters, 'facts', {}), 'distribution', '');
 local monitoring = import 'monitoring.jsonnet';
-local resourceName = if params.name != null then params.name else instance;
-local namespaceName = if params.namespace != null then params.namespace else 'syn-%s' % instance;
+local resourceName = instance;
+local namespaceName = params.namespace;
+local image = 'ghcr.io/containeroo/filesystem-exporter:v1.0.0';
+local appLabels = {
+  'app.kubernetes.io/name': resourceName,
+  'app.kubernetes.io/component': 'exporter',
+};
+local exporterArgs = [
+  '-filesystem.path=%s' % params.filesystem.path,
+  '-collector.interval=5m',
+  '-collector.timeout=2m',
+  '-web.listen-address=:9799',
+  '-web.metrics-path=/metrics',
+];
+local resources = {
+  requests: {
+    cpu: '100m',
+    memory: '128Mi',
+  },
+  limits: {
+    memory: '512Mi',
+  },
+};
+
+local volume =
+  if params.volume == null || std.length(std.objectFields(params.volume)) == 0 then
+    error 'filesystem_exporter.volume is required and must contain exactly one Kubernetes volume source'
+  else
+    { name: 'data' } + params.volume;
+
+local volumeMount = {
+  name: 'data',
+  mountPath: params.filesystem.path,
+  readOnly: true,
+};
 
 local optionalField(name, value) =
   if value == null then
@@ -18,25 +51,6 @@ local optionalField(name, value) =
     if std.length(value) == 0 then {} else { [name]: value }
   else
     { [name]: value };
-
-local appLabels = {
-  'app.kubernetes.io/name': resourceName,
-  'app.kubernetes.io/component': 'exporter',
-} + params.labels;
-
-local image = '%s/%s:%s' % [
-  params.image.registry,
-  params.image.repository,
-  params.image.tag,
-];
-
-local exporterArgs = [
-  '-filesystem.path=%s' % params.filesystem.path,
-  '-collector.interval=%s' % params.collector.interval,
-  '-collector.timeout=%s' % params.collector.timeout,
-  '-web.listen-address=%s' % params.web.listen_address,
-  '-web.metrics-path=%s' % params.web.metrics_path,
-] + params.extra_args;
 
 local monitoringLabels =
   if std.member([ 'openshift4', 'oke' ], distribution) then
@@ -57,15 +71,13 @@ local namespace =
   if params.monitoring_enabled && std.member(inv.applications, 'prometheus') then
     prometheus.RegisterNamespace(kube.Namespace(namespaceName)) {
       metadata+: {
-        annotations+: params.namespace_annotations,
-        labels+: monitoringNamespaceLabel + params.labels + params.namespace_labels,
+        labels+: monitoringNamespaceLabel,
       },
     }
   else
     kube.Namespace(namespaceName) {
       metadata+: {
-        annotations+: params.namespace_annotations,
-        labels+: monitoringNamespaceLabel + params.labels + params.namespace_labels,
+        labels+: monitoringNamespaceLabel,
       },
     };
 
@@ -75,48 +87,58 @@ local deployment = {
   metadata: {
     name: resourceName,
     namespace: namespaceName,
-    labels: appLabels + params.deployment.labels,
-    annotations: params.deployment.annotations,
+    labels: appLabels,
   },
   spec: {
-    replicas: params.replicas,
+    replicas: 1,
     selector: {
       matchLabels: appLabels,
     },
     template: {
       metadata: {
-        labels: appLabels + params.pod_labels,
-        annotations: params.pod_annotations,
+        labels: appLabels,
       },
       spec:
         {
-          terminationGracePeriodSeconds: params.termination_grace_period_seconds,
+          terminationGracePeriodSeconds: 30,
           containers: [
             {
               name: resourceName,
               image: image,
-              imagePullPolicy: params.image.pull_policy,
+              imagePullPolicy: 'IfNotPresent',
               args: exporterArgs,
               ports: [
                 {
-                  name: params.service.port_name,
-                  containerPort: params.service.port,
+                  name: 'http-metrics',
+                  containerPort: 9799,
                 },
               ],
-              readinessProbe: params.readiness_probe,
-              startupProbe: params.startup_probe,
-              livenessProbe: params.liveness_probe,
-              resources: params.resources,
-              volumeMounts: params.volume_mounts,
-            } + optionalField('securityContext', params.container_security_context),
+              readinessProbe: {
+                httpGet: {
+                  path: '/-/ready',
+                  port: 'http-metrics',
+                },
+              },
+              startupProbe: {
+                httpGet: {
+                  path: '/-/healthy',
+                  port: 'http-metrics',
+                },
+                periodSeconds: 5,
+                failureThreshold: 60,
+              },
+              livenessProbe: {
+                httpGet: {
+                  path: '/-/healthy',
+                  port: 'http-metrics',
+                },
+              },
+              resources: resources,
+              volumeMounts: [ volumeMount ],
+            },
           ],
-          volumes: params.volumes,
-        } + optionalField('priorityClassName', params.priority_class_name)
-          + optionalField('imagePullSecrets', [ { name: name } for name in params.image_pull_secrets ])
-          + optionalField('securityContext', params.pod_security_context)
-          + optionalField('nodeSelector', params.node_selector)
-          + optionalField('tolerations', params.tolerations)
-          + optionalField('affinity', params.affinity),
+          volumes: [ volume ],
+        },
     },
   },
 };
@@ -127,16 +149,15 @@ local service = {
   metadata: {
     name: resourceName,
     namespace: namespaceName,
-    labels: appLabels + params.service.labels,
-    annotations: params.service.annotations,
+    labels: appLabels,
   },
   spec: {
     selector: appLabels,
     ports: [
       {
-        name: params.service.port_name,
-        port: params.service.port,
-        targetPort: params.service.port_name,
+        name: 'http-metrics',
+        port: 9799,
+        targetPort: 'http-metrics',
       },
     ],
   },
@@ -145,6 +166,6 @@ local service = {
 {
   [if params.create_namespace then '00_namespace']: namespace,
   '10_deployment': deployment,
-  [if params.service.enabled then '20_service']: service,
+  '20_service': service,
   [if params.monitoring_enabled then '30_monitoring']: monitoring,
 }

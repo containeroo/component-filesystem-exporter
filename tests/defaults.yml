@@ -10,3 +10,7 @@ parameters:
 
   prometheus:
     defaultInstance: infra
+
+  filesystem_exporter:
+    volume:
+      emptyDir: {}

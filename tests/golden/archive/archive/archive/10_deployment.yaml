@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations: {}
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: archive
@@ -15,7 +14,6 @@ spec:
       app.kubernetes.io/name: archive
   template:
     metadata:
-      annotations: {}
       labels:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: archive
@@ -27,7 +25,7 @@ spec:
             - -collector.timeout=2m
             - -web.listen-address=:9799
             - -web.metrics-path=/metrics
-          image: ghcr.io/containeroo/filesystem-exporter:latest
+          image: ghcr.io/containeroo/filesystem-exporter:v1.0.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -54,9 +52,6 @@ spec:
               port: http-metrics
             periodSeconds: 5
           volumeMounts:
-            - mountPath: /data
-              name: data
-              readOnly: true
             - mountPath: /archive
               name: data
               readOnly: true

@@ -14,7 +14,5 @@ parameters:
   archive:
     filesystem:
       path: /archive
-    volume_mounts:
-      - name: data
-        mountPath: /archive
-        readOnly: true
+    volume:
+      emptyDir: {}

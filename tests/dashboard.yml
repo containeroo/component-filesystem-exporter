@@ -12,5 +12,7 @@ parameters:
     defaultInstance: infra
 
   filesystem_exporter:
+    volume:
+      emptyDir: {}
     grafana_dashboard:
       enabled: true
