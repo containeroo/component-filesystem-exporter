@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: filesystem-exporter
     filesystem_exporter_instance: filesystem-exporter
-  name: filesystem-exporter-scc
+  name: system:openshift:scc:hostmount-anyuid
   namespace: syn-filesystem-exporter
 roleRef:
   apiGroup: rbac.authorization.k8s.io

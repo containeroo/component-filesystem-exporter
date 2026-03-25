@@ -9,6 +9,9 @@ parameters:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
         tag: v1.2.1
+    collector:
+      interval: 5m
+      timeout: 2m
     report_child_dirs: false
     volume: null
     monitoring_enabled: true

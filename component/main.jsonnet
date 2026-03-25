@@ -23,8 +23,8 @@ local appLabels = {
 local exporterArgs = [
   '-filesystem.path=%s' % filesystemPath,
   '-filesystem.report-child-dirs=%s' % std.toString(params.report_child_dirs),
-  '-collector.interval=5m',
-  '-collector.timeout=2m',
+  '-collector.interval=%s' % params.collector.interval,
+  '-collector.timeout=%s' % params.collector.timeout,
   '-web.listen-address=:9799',
   '-web.metrics-path=/metrics',
 ];
@@ -97,7 +97,7 @@ local sccRoleBinding =
       apiVersion: 'rbac.authorization.k8s.io/v1',
       kind: 'RoleBinding',
       metadata: {
-        name: '%s-scc' % resourceName,
+        name: 'system:openshift:scc:hostmount-anyuid',
         namespace: namespaceName,
         labels: appLabels,
       },

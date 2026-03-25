@@ -39,10 +39,28 @@ images:
   exporter:
     registry: ghcr.io
     repository: containeroo/filesystem-exporter
-    tag: v1.2.0
+    tag: v1.2.1
 ----
 
 The container image used for the exporter.
+
+== `collector.interval`
+
+[horizontal]
+type:: string
+default:: `5m`
+
+Controls the exporter flag `-collector.interval`.
+This defines how often the exporter refreshes filesystem usage data in the background.
+
+== `collector.timeout`
+
+[horizontal]
+type:: string
+default:: `2m`
+
+Controls the exporter flag `-collector.timeout`.
+This defines the timeout for a single collection run.
 
 == `report_child_dirs`
 
