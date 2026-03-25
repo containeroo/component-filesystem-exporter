@@ -16,7 +16,7 @@ spec:
             description: filesystem-exporter for {{ $labels.root_path }} has failed
               every collection for the last 10m.
             summary: filesystem-exporter has not completed a successful collection
-          expr: max_over_time(filesystem_exporter_collect_success{root_path="/archive"}[10m])
+          expr: max_over_time(filesystem_exporter_collect_success{filesystem_exporter_instance="archive",root_path="/data"}[10m])
             < 1
           for: 10m
           labels:
@@ -28,7 +28,7 @@ spec:
             description: filesystem-exporter for {{ $labels.root_path }} has not produced
               a fresh collection timestamp for more than 900 seconds.
             summary: filesystem-exporter metrics are stale
-          expr: time() - filesystem_exporter_collect_timestamp_seconds{root_path="/archive"}
+          expr: time() - filesystem_exporter_collect_timestamp_seconds{filesystem_exporter_instance="archive",root_path="/data"}
             > 900
           for: 5m
           labels:
@@ -39,8 +39,8 @@ spec:
           annotations:
             description: Less than 5% free space remains on {{ $labels.path }}.
             summary: filesystem free space is critically low
-          expr: filesystem_path_available_bytes{root_path="/archive",path="/archive"}
-            / filesystem_path_capacity_bytes{root_path="/archive",path="/archive"}
+          expr: filesystem_path_available_bytes{filesystem_exporter_instance="archive",root_path="/data",path="/data"}
+            / filesystem_path_capacity_bytes{filesystem_exporter_instance="archive",root_path="/data",path="/data"}
             < 0.05
           for: 15m
           labels:
@@ -51,8 +51,8 @@ spec:
           annotations:
             description: Less than 10% free space remains on {{ $labels.path }}.
             summary: filesystem free space is low
-          expr: filesystem_path_available_bytes{root_path="/archive",path="/archive"}
-            / filesystem_path_capacity_bytes{root_path="/archive",path="/archive"}
+          expr: filesystem_path_available_bytes{filesystem_exporter_instance="archive",root_path="/data",path="/data"}
+            / filesystem_path_capacity_bytes{filesystem_exporter_instance="archive",root_path="/data",path="/data"}
             < 0.1
           for: 15m
           labels:
@@ -82,3 +82,5 @@ spec:
     matchLabels:
       app.kubernetes.io/component: exporter
       app.kubernetes.io/name: archive
+  targetLabels:
+    - filesystem_exporter_instance

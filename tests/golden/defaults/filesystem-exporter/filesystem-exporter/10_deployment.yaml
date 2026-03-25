@@ -4,6 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: filesystem-exporter
+    filesystem_exporter_instance: filesystem-exporter
   name: filesystem-exporter
   namespace: syn-filesystem-exporter
 spec:
@@ -12,11 +13,13 @@ spec:
     matchLabels:
       app.kubernetes.io/component: exporter
       app.kubernetes.io/name: filesystem-exporter
+      filesystem_exporter_instance: filesystem-exporter
   template:
     metadata:
       labels:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: filesystem-exporter
+        filesystem_exporter_instance: filesystem-exporter
     spec:
       containers:
         - args:

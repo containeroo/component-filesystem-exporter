@@ -13,8 +13,6 @@ applications:
 parameters:
   archive:
     namespace: syn-archive
-    filesystem:
-      path: /archive
     volume:
       nfs:
         server: nfs.example.internal
@@ -29,14 +27,6 @@ default:: `syn-filesystem-exporter`
 
 The namespace in which to deploy this component.
 By default this is `syn-${_instance}`.
-
-== `filesystem.path`
-
-[horizontal]
-type:: string
-default:: `/data`
-
-The mounted filesystem path scanned by the exporter. This value is also used in the generated alert expressions.
 
 == `images.exporter`
 
@@ -72,7 +62,7 @@ volume:
     claimName: archive
 ----
 
-The component hardcodes the volume name to `data`, mounts it read-only, and uses `filesystem.path` as the mount path.
+The component hardcodes the volume name to `data`, mounts it read-only, and always mounts it at `/data`.
 
 == `monitoring_enabled`
 
@@ -101,8 +91,6 @@ Controls an optional Grafana dashboard `ConfigMap`.
 [source,yaml]
 ----
 namespace: example-namespace
-filesystem:
-  path: /srv/data
 volume:
   nfs:
     server: nfs.example.internal

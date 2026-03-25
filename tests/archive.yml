@@ -12,7 +12,5 @@ parameters:
     defaultInstance: infra
 
   archive:
-    filesystem:
-      path: /archive
     volume:
       emptyDir: {}

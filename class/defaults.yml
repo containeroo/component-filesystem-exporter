@@ -9,8 +9,6 @@ parameters:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
         tag: v1.0.0
-    filesystem:
-      path: /data
     volume: null
     monitoring_enabled: true
     grafana_dashboard:

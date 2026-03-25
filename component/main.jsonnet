@@ -8,6 +8,7 @@ local distribution = std.get(std.get(inv.parameters, 'facts', {}), 'distribution
 local monitoring = import 'monitoring.jsonnet';
 local resourceName = instance;
 local namespaceName = params.namespace;
+local filesystemPath = '/data';
 local image = '%s/%s:%s' % [
   params.images.exporter.registry,
   params.images.exporter.repository,
@@ -16,9 +17,10 @@ local image = '%s/%s:%s' % [
 local appLabels = {
   'app.kubernetes.io/name': resourceName,
   'app.kubernetes.io/component': 'exporter',
+  filesystem_exporter_instance: resourceName,
 };
 local exporterArgs = [
-  '-filesystem.path=%s' % params.filesystem.path,
+  '-filesystem.path=%s' % filesystemPath,
   '-collector.interval=5m',
   '-collector.timeout=2m',
   '-web.listen-address=:9799',
@@ -42,19 +44,9 @@ local volume =
 
 local volumeMount = {
   name: 'data',
-  mountPath: params.filesystem.path,
+  mountPath: filesystemPath,
   readOnly: true,
 };
-
-local optionalField(name, value) =
-  if value == null then
-    {}
-  else if std.type(value) == 'object' then
-    if std.length(std.objectFields(value)) == 0 then {} else { [name]: value }
-  else if std.type(value) == 'array' then
-    if std.length(value) == 0 then {} else { [name]: value }
-  else
-    { [name]: value };
 
 local monitoringLabels =
   if std.member([ 'openshift4', 'oke' ], distribution) then

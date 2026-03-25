@@ -16,7 +16,7 @@ spec:
             description: filesystem-exporter for {{ $labels.root_path }} has failed
               every collection for the last 10m.
             summary: filesystem-exporter has not completed a successful collection
-          expr: max_over_time(filesystem_exporter_collect_success{root_path="/data"}[10m])
+          expr: max_over_time(filesystem_exporter_collect_success{filesystem_exporter_instance="filesystem-exporter",root_path="/data"}[10m])
             < 1
           for: 10m
           labels:
@@ -28,7 +28,7 @@ spec:
             description: filesystem-exporter for {{ $labels.root_path }} has not produced
               a fresh collection timestamp for more than 900 seconds.
             summary: filesystem-exporter metrics are stale
-          expr: time() - filesystem_exporter_collect_timestamp_seconds{root_path="/data"}
+          expr: time() - filesystem_exporter_collect_timestamp_seconds{filesystem_exporter_instance="filesystem-exporter",root_path="/data"}
             > 900
           for: 5m
           labels:
@@ -39,8 +39,9 @@ spec:
           annotations:
             description: Less than 5% free space remains on {{ $labels.path }}.
             summary: filesystem free space is critically low
-          expr: filesystem_path_available_bytes{root_path="/data",path="/data"} /
-            filesystem_path_capacity_bytes{root_path="/data",path="/data"} < 0.05
+          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            < 0.05
           for: 15m
           labels:
             severity: critical
@@ -50,8 +51,9 @@ spec:
           annotations:
             description: Less than 10% free space remains on {{ $labels.path }}.
             summary: filesystem free space is low
-          expr: filesystem_path_available_bytes{root_path="/data",path="/data"} /
-            filesystem_path_capacity_bytes{root_path="/data",path="/data"} < 0.1
+          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            < 0.1
           for: 15m
           labels:
             severity: warning
@@ -80,6 +82,8 @@ spec:
     matchLabels:
       app.kubernetes.io/component: exporter
       app.kubernetes.io/name: filesystem-exporter
+  targetLabels:
+    - filesystem_exporter_instance
 ---
 apiVersion: v1
 data:
@@ -162,17 +166,17 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_path_used_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "expr": "filesystem_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "used",
               "refId": "A"
             },
             {
-              "expr": "filesystem_path_available_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "expr": "filesystem_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "available",
               "refId": "B"
             },
             {
-              "expr": "filesystem_path_capacity_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "expr": "filesystem_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "capacity",
               "refId": "C"
             }
@@ -239,7 +243,7 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_path_available_bytes{root_path=~\"$root_path\",path=~\"$root_path\"} / filesystem_path_capacity_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "expr": "filesystem_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"} / filesystem_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "free ratio",
               "refId": "A"
             }
@@ -298,7 +302,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sort_desc(filesystem_path_used_bytes{root_path=~\"$root_path\",path!=\"$root_path\"})",
+              "expr": "sort_desc(filesystem_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path!=\"/data\"})",
               "legendFormat": "{{ path }}",
               "refId": "A"
             }
@@ -357,7 +361,7 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_exporter_collect_duration_seconds{root_path=~\"$root_path\"}",
+              "expr": "filesystem_exporter_collect_duration_seconds{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\"}",
               "legendFormat": "collect duration",
               "refId": "A"
             }
@@ -419,7 +423,7 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_exporter_collect_success{root_path=~\"$root_path\"}",
+              "expr": "filesystem_exporter_collect_success{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\"}",
               "legendFormat": "collect success",
               "refId": "A"
             }
@@ -461,25 +465,25 @@ data:
           {
             "current": {
               "selected": false,
-              "text": "/data",
-              "value": "/data"
+              "text": "filesystem-exporter",
+              "value": "filesystem-exporter"
             },
             "datasource": {
               "type": "prometheus",
               "uid": "${datasource}"
             },
-            "definition": "label_values(filesystem_path_used_bytes, root_path)",
+            "definition": "label_values(filesystem_path_used_bytes, filesystem_exporter_instance)",
             "hide": 0,
             "includeAll": false,
-            "label": "Root Path",
+            "label": "Instance",
             "multi": false,
-            "name": "root_path",
+            "name": "filesystem_exporter_instance",
             "options": [
 
             ],
             "query": {
-              "query": "label_values(filesystem_path_used_bytes, root_path)",
-              "refId": "filesystem-exporter-root-paths"
+              "query": "label_values(filesystem_path_used_bytes, filesystem_exporter_instance)",
+              "refId": "filesystem-exporter-instances"
             },
             "refresh": 1,
             "regex": "",
