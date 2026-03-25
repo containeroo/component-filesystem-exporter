@@ -8,7 +8,7 @@ parameters:
       exporter:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
-        tag: v1.2.1
+        tag: v1.2.2
     collector:
       interval: 5m
       timeout: 2m
