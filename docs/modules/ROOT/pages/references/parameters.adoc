@@ -38,6 +38,23 @@ default:: `/data`
 
 The mounted filesystem path scanned by the exporter. This value is also used in the generated alert expressions.
 
+== `images.exporter`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+images:
+  exporter:
+    registry: ghcr.io
+    repository: containeroo/filesystem-exporter
+    tag: v1.0.0
+----
+
+The container image used for the exporter.
+
 == `volume`
 
 [horizontal]

@@ -8,7 +8,11 @@ local distribution = std.get(std.get(inv.parameters, 'facts', {}), 'distribution
 local monitoring = import 'monitoring.jsonnet';
 local resourceName = instance;
 local namespaceName = params.namespace;
-local image = 'ghcr.io/containeroo/filesystem-exporter:v1.0.0';
+local image = '%s/%s:%s' % [
+  params.images.exporter.registry,
+  params.images.exporter.repository,
+  params.images.exporter.tag,
+];
 local appLabels = {
   'app.kubernetes.io/name': resourceName,
   'app.kubernetes.io/component': 'exporter',

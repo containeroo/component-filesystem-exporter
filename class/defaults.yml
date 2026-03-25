@@ -4,6 +4,11 @@ parameters:
       multi_instance: true
       multi_tenant: true
     namespace: syn-${_instance}
+    images:
+      exporter:
+        registry: ghcr.io
+        repository: containeroo/filesystem-exporter
+        tag: v1.0.0
     filesystem:
       path: /data
     volume: null
