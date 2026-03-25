@@ -14,9 +14,8 @@ parameters:
   archive:
     namespace: syn-archive
     volume:
-      nfs:
-        server: nfs.example.internal
-        path: /exports/archive
+      persistentVolumeClaim:
+        claimName: archive
 ----
 
 == `namespace`
@@ -53,6 +52,8 @@ default:: `null`
 
 The Kubernetes volume source for the single filesystem mounted by this exporter instance.
 This parameter is required.
+On OpenShift, if this volume uses `nfs`, the component creates a dedicated service account plus a namespaced `RoleBinding` to the built-in `ClusterRole` `system:openshift:scc:hostmount-anyuid`.
+Applying that binding still requires a sufficiently privileged reconciler, because granting SCC usage is itself a privileged operation.
 
 Example:
 [source,yaml]
@@ -92,9 +93,8 @@ Controls an optional Grafana dashboard `ConfigMap`.
 ----
 namespace: example-namespace
 volume:
-  nfs:
-    server: nfs.example.internal
-    path: /exports/data
+  persistentVolumeClaim:
+    claimName: data
 grafana_dashboard:
   enabled: true
 ----

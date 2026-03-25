@@ -58,6 +58,7 @@ spec:
             - mountPath: /data
               name: data
               readOnly: true
+      serviceAccountName: filesystem-exporter
       terminationGracePeriodSeconds: 30
       volumes:
         - emptyDir: {}

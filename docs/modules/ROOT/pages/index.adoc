@@ -10,5 +10,7 @@ Monitoring follows the same conventions as `component-backup-k8up`, including na
 An optional Grafana dashboard can be rendered as a labeled `ConfigMap` for sidecar-based dashboard discovery.
 The namespace defaults to `syn-${_instance}`.
 Each instance monitors exactly one mounted root path, so the component requires a single `volume` definition and mounts it read-only at `/data`.
+On OpenShift, if you use a direct `nfs` volume, the component creates a dedicated service account and a namespaced `RoleBinding` to the built-in `ClusterRole` `system:openshift:scc:hostmount-anyuid`.
+Applying that binding still requires a sufficiently privileged reconciler, because OpenShift treats granting SCC usage as a privileged operation.
 
 See the xref:references/parameters.adoc[parameters] reference for further details.

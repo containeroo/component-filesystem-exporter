@@ -9,6 +9,7 @@ local monitoring = import 'monitoring.jsonnet';
 local resourceName = instance;
 local namespaceName = params.namespace;
 local filesystemPath = '/data';
+local serviceAccountName = resourceName;
 local image = '%s/%s:%s' % [
   params.images.exporter.registry,
   params.images.exporter.repository,
@@ -41,6 +42,8 @@ local volume =
     error 'filesystem_exporter.volume is required and must contain exactly one Kubernetes volume source'
   else
     { name: 'data' } + params.volume;
+local nfsVolume = std.objectHas(params.volume, 'nfs');
+local openshiftNfsScc = distribution == 'openshift4' && nfsVolume;
 
 local volumeMount = {
   name: 'data',
@@ -77,6 +80,40 @@ local namespace =
       },
     };
 
+local serviceAccount = {
+  apiVersion: 'v1',
+  kind: 'ServiceAccount',
+  metadata: {
+    name: serviceAccountName,
+    namespace: namespaceName,
+    labels: appLabels,
+  },
+};
+
+local sccRoleBinding =
+  if openshiftNfsScc then
+    {
+      apiVersion: 'rbac.authorization.k8s.io/v1',
+      kind: 'RoleBinding',
+      metadata: {
+        name: '%s-scc' % resourceName,
+        namespace: namespaceName,
+        labels: appLabels,
+      },
+      roleRef: {
+        apiGroup: 'rbac.authorization.k8s.io',
+        kind: 'ClusterRole',
+        name: 'system:openshift:scc:hostmount-anyuid',
+      },
+      subjects: [
+        {
+          kind: 'ServiceAccount',
+          name: serviceAccountName,
+          namespace: namespaceName,
+        },
+      ],
+    };
+
 local deployment = {
   apiVersion: 'apps/v1',
   kind: 'Deployment',
@@ -96,6 +133,7 @@ local deployment = {
       },
       spec:
         {
+          serviceAccountName: serviceAccountName,
           terminationGracePeriodSeconds: 30,
           containers: [
             {
@@ -161,6 +199,8 @@ local service = {
 
 {
   '00_namespace': namespace,
+  '05_serviceaccount': serviceAccount,
+  [if openshiftNfsScc then '07_scc_rolebinding']: sccRoleBinding,
   '10_deployment': deployment,
   '20_service': service,
   [if params.monitoring_enabled then '30_monitoring']: monitoring,

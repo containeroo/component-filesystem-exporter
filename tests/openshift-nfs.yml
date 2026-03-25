@@ -1,0 +1,21 @@
+applications:
+  - prometheus
+
+parameters:
+  facts:
+    distribution: openshift4
+
+  kapitan:
+    dependencies:
+      - type: https
+        source: https://raw.githubusercontent.com/projectsyn/component-prometheus/master/lib/prometheus.libsonnet
+        output_path: vendor/lib/prometheus.libsonnet
+
+  prometheus:
+    defaultInstance: infra
+
+  filesystem_exporter:
+    volume:
+      nfs:
+        server: nfs.example.internal
+        path: /exports/data

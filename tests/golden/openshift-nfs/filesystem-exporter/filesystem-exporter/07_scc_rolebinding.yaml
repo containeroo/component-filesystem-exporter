@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: filesystem-exporter
+    filesystem_exporter_instance: filesystem-exporter
+  name: filesystem-exporter-scc
+  namespace: syn-filesystem-exporter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:hostmount-anyuid
+subjects:
+  - kind: ServiceAccount
+    name: filesystem-exporter
+    namespace: syn-filesystem-exporter

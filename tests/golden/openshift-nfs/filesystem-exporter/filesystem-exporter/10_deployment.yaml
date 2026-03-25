@@ -3,23 +3,23 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/component: exporter
-    app.kubernetes.io/name: archive
-    filesystem_exporter_instance: archive
-  name: archive
-  namespace: syn-archive
+    app.kubernetes.io/name: filesystem-exporter
+    filesystem_exporter_instance: filesystem-exporter
+  name: filesystem-exporter
+  namespace: syn-filesystem-exporter
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: exporter
-      app.kubernetes.io/name: archive
-      filesystem_exporter_instance: archive
+      app.kubernetes.io/name: filesystem-exporter
+      filesystem_exporter_instance: filesystem-exporter
   template:
     metadata:
       labels:
         app.kubernetes.io/component: exporter
-        app.kubernetes.io/name: archive
-        filesystem_exporter_instance: archive
+        app.kubernetes.io/name: filesystem-exporter
+        filesystem_exporter_instance: filesystem-exporter
     spec:
       containers:
         - args:
@@ -34,7 +34,7 @@ spec:
             httpGet:
               path: /-/healthy
               port: http-metrics
-          name: archive
+          name: filesystem-exporter
           ports:
             - containerPort: 9799
               name: http-metrics
@@ -58,8 +58,10 @@ spec:
             - mountPath: /data
               name: data
               readOnly: true
-      serviceAccountName: archive
+      serviceAccountName: filesystem-exporter
       terminationGracePeriodSeconds: 30
       volumes:
-        - emptyDir: {}
-          name: data
+        - name: data
+          nfs:
+            path: /exports/data
+            server: nfs.example.internal
