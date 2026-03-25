@@ -1,0 +1,85 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    monitoring.syn.tools/enabled: 'true'
+    prometheus: main
+    role: alert-rules
+  name: archive
+  namespace: syn-archive
+spec:
+  groups:
+    - name: archive.rules
+      rules:
+        - alert: FilesystemExporterCollectionFailing
+          annotations:
+            description: filesystem-exporter for {{ $labels.root_path }} has failed
+              every collection for the last 10m.
+            summary: filesystem-exporter has not completed a successful collection
+          expr: max_over_time(filesystem_exporter_collect_success{root_path="/archive"}[10m])
+            < 1
+          for: 10m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemExporterCollectionStale
+          annotations:
+            description: filesystem-exporter for {{ $labels.root_path }} has not produced
+              a fresh collection timestamp for more than 900 seconds.
+            summary: filesystem-exporter metrics are stale
+          expr: time() - filesystem_exporter_collect_timestamp_seconds{root_path="/archive"}
+            > 900
+          for: 5m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemUsageCritical
+          annotations:
+            description: Less than 5% free space remains on {{ $labels.path }}.
+            summary: filesystem free space is critically low
+          expr: filesystem_path_available_bytes{root_path="/archive",path="/archive"}
+            / filesystem_path_capacity_bytes{root_path="/archive",path="/archive"}
+            < 0.05
+          for: 15m
+          labels:
+            severity: critical
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemUsageHigh
+          annotations:
+            description: Less than 10% free space remains on {{ $labels.path }}.
+            summary: filesystem free space is low
+          expr: filesystem_path_available_bytes{root_path="/archive",path="/archive"}
+            / filesystem_path_capacity_bytes{root_path="/archive",path="/archive"}
+            < 0.1
+          for: 15m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: archive
+    monitoring.syn.tools/enabled: 'true'
+    prometheus: main
+  name: archive
+  namespace: syn-archive
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: http-metrics
+  namespaceSelector:
+    matchNames:
+      - syn-archive
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: archive

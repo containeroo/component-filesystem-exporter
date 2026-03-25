@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: filesystem-exporter
+  name: filesystem-exporter
+  namespace: syn-filesystem-exporter
+spec:
+  ports:
+    - name: http-metrics
+      port: 9799
+      targetPort: http-metrics
+  selector:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: filesystem-exporter

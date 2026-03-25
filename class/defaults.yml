@@ -1,0 +1,91 @@
+parameters:
+  filesystem_exporter:
+    =_metadata:
+      multi_instance: true
+      multi_tenant: true
+    create_namespace: true
+    name: null
+    namespace: null
+    labels: {}
+    namespace_labels: {}
+    namespace_annotations: {}
+    image:
+      registry: ghcr.io
+      repository: containeroo/filesystem-exporter
+      tag: latest
+      pull_policy: IfNotPresent
+    image_pull_secrets: []
+    replicas: 1
+    termination_grace_period_seconds: 30
+    priority_class_name: null
+    pod_annotations: {}
+    pod_labels: {}
+    pod_security_context: null
+    container_security_context: null
+    filesystem:
+      path: /data
+    collector:
+      interval: 5m
+      timeout: 2m
+    web:
+      listen_address: :9799
+      metrics_path: /metrics
+    extra_args: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    volumes:
+      - name: data
+        emptyDir: {}
+    volume_mounts:
+      - name: data
+        mountPath: /data
+        readOnly: true
+    node_selector: {}
+    tolerations: []
+    affinity: {}
+    deployment:
+      labels: {}
+      annotations: {}
+    service:
+      enabled: true
+      port_name: http-metrics
+      port: 9799
+      labels: {}
+      annotations: {}
+    readiness_probe:
+      httpGet:
+        path: /-/ready
+        port: http-metrics
+    startup_probe:
+      httpGet:
+        path: /-/healthy
+        port: http-metrics
+      periodSeconds: 5
+      failureThreshold: 60
+    liveness_probe:
+      httpGet:
+        path: /-/healthy
+        port: http-metrics
+    monitoring_enabled: true
+    prometheus_name: main
+    service_monitor:
+      interval: 30s
+      scrape_timeout: null
+      labels: {}
+      annotations: {}
+    grafana_dashboard:
+      enabled: false
+      name: null
+      labels:
+        grafana_dashboard: '1'
+      annotations: {}
+    alert_thresholds:
+      collection_failure_window: 10m
+      collection_stale_seconds: 900
+      usage_high_ratio: 0.1
+      usage_critical_ratio: 0.05
+    monitoring_alerts: {}

@@ -1,0 +1,512 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    monitoring.syn.tools/enabled: 'true'
+    prometheus: main
+    role: alert-rules
+  name: filesystem-exporter
+  namespace: syn-filesystem-exporter
+spec:
+  groups:
+    - name: filesystem-exporter.rules
+      rules:
+        - alert: FilesystemExporterCollectionFailing
+          annotations:
+            description: filesystem-exporter for {{ $labels.root_path }} has failed
+              every collection for the last 10m.
+            summary: filesystem-exporter has not completed a successful collection
+          expr: max_over_time(filesystem_exporter_collect_success{root_path="/data"}[10m])
+            < 1
+          for: 10m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemExporterCollectionStale
+          annotations:
+            description: filesystem-exporter for {{ $labels.root_path }} has not produced
+              a fresh collection timestamp for more than 900 seconds.
+            summary: filesystem-exporter metrics are stale
+          expr: time() - filesystem_exporter_collect_timestamp_seconds{root_path="/data"}
+            > 900
+          for: 5m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemUsageCritical
+          annotations:
+            description: Less than 5% free space remains on {{ $labels.path }}.
+            summary: filesystem free space is critically low
+          expr: filesystem_path_available_bytes{root_path="/data",path="/data"} /
+            filesystem_path_capacity_bytes{root_path="/data",path="/data"} < 0.05
+          for: 15m
+          labels:
+            severity: critical
+            syn: 'true'
+            syn_component: filesystem-exporter
+        - alert: FilesystemUsageHigh
+          annotations:
+            description: Less than 10% free space remains on {{ $labels.path }}.
+            summary: filesystem free space is low
+          expr: filesystem_path_available_bytes{root_path="/data",path="/data"} /
+            filesystem_path_capacity_bytes{root_path="/data",path="/data"} < 0.1
+          for: 15m
+          labels:
+            severity: warning
+            syn: 'true'
+            syn_component: filesystem-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: filesystem-exporter
+    monitoring.syn.tools/enabled: 'true'
+    prometheus: main
+  name: filesystem-exporter
+  namespace: syn-filesystem-exporter
+spec:
+  endpoints:
+    - interval: 30s
+      path: /metrics
+      port: http-metrics
+  namespaceSelector:
+    matchNames:
+      - syn-filesystem-exporter
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: filesystem-exporter
+---
+apiVersion: v1
+data:
+  filesystem-exporter.json: |-
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [
+
+      ],
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "unit": "bytes"
+            },
+            "overrides": [
+
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 16,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "legend": {
+              "calcs": [
+
+              ],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "filesystem_path_used_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "legendFormat": "used",
+              "refId": "A"
+            },
+            {
+              "expr": "filesystem_path_available_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "legendFormat": "available",
+              "refId": "B"
+            },
+            {
+              "expr": "filesystem_path_capacity_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "legendFormat": "capacity",
+              "refId": "C"
+            }
+          ],
+          "title": "Root Filesystem Capacity",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 1,
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.1
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.2
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": [
+
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "expr": "filesystem_path_available_bytes{root_path=~\"$root_path\",path=~\"$root_path\"} / filesystem_path_capacity_bytes{root_path=~\"$root_path\",path=~\"$root_path\"}",
+              "legendFormat": "free ratio",
+              "refId": "A"
+            }
+          ],
+          "title": "Free Space",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "drawStyle": "bars",
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "showPoints": "never",
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "unit": "bytes"
+            },
+            "overrides": [
+
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [
+
+              ],
+              "displayMode": "table",
+              "placement": "right"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sort_desc(filesystem_path_used_bytes{root_path=~\"$root_path\",path!=\"$root_path\"})",
+              "legendFormat": "{{ path }}",
+              "refId": "A"
+            }
+          ],
+          "title": "Immediate Child Directories by Used Space",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "showPoints": "never",
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "unit": "s"
+            },
+            "overrides": [
+
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 17
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "calcs": [
+
+              ],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "expr": "filesystem_exporter_collect_duration_seconds{root_path=~\"$root_path\"}",
+              "legendFormat": "collect duration",
+              "refId": "A"
+            }
+          ],
+          "title": "Collection Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 17
+          },
+          "id": 5,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "expr": "filesystem_exporter_collect_success{root_path=~\"$root_path\"}",
+              "legendFormat": "collect success",
+              "refId": "A"
+            }
+          ],
+          "title": "Last Collection Success",
+          "type": "stat"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "style": "dark",
+      "tags": [
+        "filesystem-exporter",
+        "storage",
+        "prometheus"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": false,
+              "text": "Prometheus",
+              "value": "Prometheus"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Datasource",
+            "multi": false,
+            "name": "datasource",
+            "options": [
+
+            ],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          },
+          {
+            "current": {
+              "selected": false,
+              "text": "/data",
+              "value": "/data"
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "definition": "label_values(filesystem_path_used_bytes, root_path)",
+            "hide": 0,
+            "includeAll": false,
+            "label": "Root Path",
+            "multi": false,
+            "name": "root_path",
+            "options": [
+
+            ],
+            "query": {
+              "query": "label_values(filesystem_path_used_bytes, root_path)",
+              "refId": "filesystem-exporter-root-paths"
+            },
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
+      "timepicker": {
+
+      },
+      "timezone": "",
+      "title": "Filesystem Exporter",
+      "uid": "filesystem-exporter",
+      "version": 1
+    }
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+    grafana_dashboard: '1'
+    name: filesystem-exporter-dashboard
+  name: filesystem-exporter-dashboard
+  namespace: syn-filesystem-exporter

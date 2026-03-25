@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: filesystem-exporter
+  name: filesystem-exporter
+  namespace: syn-filesystem-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: filesystem-exporter
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: filesystem-exporter
+    spec:
+      containers:
+        - args:
+            - -filesystem.path=/data
+            - -collector.interval=5m
+            - -collector.timeout=2m
+            - -web.listen-address=:9799
+            - -web.metrics-path=/metrics
+          image: ghcr.io/containeroo/filesystem-exporter:latest
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http-metrics
+          name: filesystem-exporter
+          ports:
+            - containerPort: 9799
+              name: http-metrics
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http-metrics
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          startupProbe:
+            failureThreshold: 60
+            httpGet:
+              path: /-/healthy
+              port: http-metrics
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /data
+              name: data
+              readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: data

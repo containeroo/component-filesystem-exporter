@@ -1,0 +1,228 @@
+= Parameters
+
+This component is multi-instance. The parent key for all of the following parameters is the instance name you assign in your inventory.
+
+Example inventory snippet:
+
+[source,yaml]
+----
+applications:
+  - filesystem-exporter as archive
+
+parameters:
+  archive:
+    filesystem:
+      path: /archive
+----
+
+== `create_namespace`
+
+[horizontal]
+type:: boolean
+default:: `true`
+
+Whether the component should render the target namespace manifest.
+
+== `namespace`
+
+[horizontal]
+type:: string
+default:: `syn-filesystem-exporter`
+
+The namespace in which to deploy this component.
+
+== `name`
+
+[horizontal]
+type:: string
+default:: `filesystem-exporter`
+
+The Kubernetes resource name used for the deployment, service, ServiceMonitor, and PrometheusRule.
+
+== `image`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+image:
+  registry: ghcr.io
+  repository: containeroo/filesystem-exporter
+  tag: latest
+  pull_policy: IfNotPresent
+----
+
+Container image settings for the exporter.
+
+== `filesystem.path`
+
+[horizontal]
+type:: string
+default:: `/data`
+
+The mounted filesystem path scanned by the exporter. This value is also used in the generated alert expressions.
+
+== `collector`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+collector:
+  interval: 5m
+  timeout: 2m
+----
+
+Refresh and timeout settings passed through to the exporter flags.
+
+== `volumes`
+
+[horizontal]
+type:: array
+default::
++
+[source,yaml]
+----
+volumes:
+  - name: data
+    emptyDir: {}
+----
+
+The pod volumes. Override this for real deployments to mount a PVC, NFS export, hostPath, or another storage source.
+
+== `volume_mounts`
+
+[horizontal]
+type:: array
+default::
++
+[source,yaml]
+----
+volume_mounts:
+  - name: data
+    mountPath: /data
+    readOnly: true
+----
+
+The container volume mounts. The mount path should typically match `filesystem.path`.
+
+== `service`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+service:
+  enabled: true
+  port_name: http-metrics
+  port: 9799
+  labels: {}
+  annotations: {}
+----
+
+Controls the metrics `Service`.
+
+== `monitoring_enabled`
+
+[horizontal]
+type:: boolean
+default:: `true`
+
+Enables the monitoring resources. When enabled, the component renders a `ServiceMonitor` and a `PrometheusRule` and adds the same namespace-level monitoring labels described by `component-backup-k8up`: `SYNMonitoring=main` on most distributions, or `openshift.io/cluster-monitoring=true` on OpenShift 4.
+
+== `prometheus_name`
+
+[horizontal]
+type:: string
+default:: `main`
+
+The value assigned to the `prometheus` label on the generated `PrometheusRule`, matching the convention used by `component-backup-k8up`.
+
+== `service_monitor`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+service_monitor:
+  interval: 30s
+  scrape_timeout: null
+  labels: {}
+  annotations: {}
+----
+
+Controls the generated Prometheus Operator `ServiceMonitor`.
+
+== `grafana_dashboard`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+grafana_dashboard:
+  enabled: false
+  name: filesystem-exporter
+  labels:
+    grafana_dashboard: '1'
+  annotations: {}
+----
+
+Controls an optional Grafana dashboard `ConfigMap`. The default labels are suitable for common Grafana sidecar dashboard discovery patterns.
+
+== `alert_thresholds`
+
+[horizontal]
+type:: object
+default::
++
+[source,yaml]
+----
+alert_thresholds:
+  collection_failure_window: 10m
+  collection_stale_seconds: 900
+  usage_high_ratio: 0.1
+  usage_critical_ratio: 0.05
+----
+
+Holds the threshold values used by the default alerts in `monitoring_alerts`, similar to `component-backup-k8up`.
+
+== `monitoring_alerts`
+
+[horizontal]
+type:: object
+default:: Rendered in Jsonnet from built-in defaults
+
+Alert definitions to deploy in the generated `PrometheusRule`. The dict is transformed to a list of alerting rules, and the keys become the `alert` names. Individual alerts can be disabled by setting their value to `null`.
+
+== Example
+
+[source,yaml]
+----
+namespace: example-namespace
+filesystem:
+  path: /srv/data
+volumes:
+  - name: data
+    nfs:
+      server: nfs.example.internal
+      path: /exports/data
+      readOnly: true
+volume_mounts:
+  - name: data
+    mountPath: /srv/data
+    readOnly: true
+monitoring_alerts:
+  FilesystemUsageHigh:
+    annotations:
+      runbook_url: https://example.com/filesystem-exporter-runbook
+----
