@@ -29,7 +29,7 @@ spec:
             - -collector.timeout=2m
             - -web.listen-address=:9799
             - -web.metrics-path=/metrics
-          image: ghcr.io/containeroo/filesystem-exporter:v1.1.0
+          image: ghcr.io/containeroo/filesystem-exporter:v1.2.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:

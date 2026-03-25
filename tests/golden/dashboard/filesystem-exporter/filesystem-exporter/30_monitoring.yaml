@@ -39,8 +39,8 @@ spec:
           annotations:
             description: Less than 5% free space remains on {{ $labels.path }}.
             summary: filesystem free space is critically low
-          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
-            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+          expr: filesystem_exporter_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
             < 0.05
           for: 15m
           labels:
@@ -51,8 +51,8 @@ spec:
           annotations:
             description: Less than 10% free space remains on {{ $labels.path }}.
             summary: filesystem free space is low
-          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
-            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+          expr: filesystem_exporter_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
             < 0.1
           for: 15m
           labels:
@@ -166,17 +166,17 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
+              "expr": "filesystem_exporter_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "used",
               "refId": "A"
             },
             {
-              "expr": "filesystem_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
+              "expr": "filesystem_exporter_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "available",
               "refId": "B"
             },
             {
-              "expr": "filesystem_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
+              "expr": "filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "capacity",
               "refId": "C"
             }
@@ -243,7 +243,7 @@ data:
           },
           "targets": [
             {
-              "expr": "filesystem_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"} / filesystem_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
+              "expr": "filesystem_exporter_path_available_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"} / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path=\"/data\"}",
               "legendFormat": "free ratio",
               "refId": "A"
             }
@@ -302,7 +302,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sort_desc(filesystem_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path!=\"/data\"})",
+              "expr": "sort_desc(filesystem_exporter_path_used_bytes{filesystem_exporter_instance=~\"$filesystem_exporter_instance\",root_path=\"/data\",path!=\"/data\"})",
               "legendFormat": "{{ path }}",
               "refId": "A"
             }
@@ -472,7 +472,7 @@ data:
               "type": "prometheus",
               "uid": "${datasource}"
             },
-            "definition": "label_values(filesystem_path_used_bytes, filesystem_exporter_instance)",
+            "definition": "label_values(filesystem_exporter_path_used_bytes, filesystem_exporter_instance)",
             "hide": 0,
             "includeAll": false,
             "label": "Instance",
@@ -482,7 +482,7 @@ data:
 
             ],
             "query": {
-              "query": "label_values(filesystem_path_used_bytes, filesystem_exporter_instance)",
+              "query": "label_values(filesystem_exporter_path_used_bytes, filesystem_exporter_instance)",
               "refId": "filesystem-exporter-instances"
             },
             "refresh": 1,

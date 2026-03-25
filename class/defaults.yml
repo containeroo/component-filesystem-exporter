@@ -8,7 +8,7 @@ parameters:
       exporter:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
-        tag: v1.1.0
+        tag: v1.2.0
     report_child_dirs: false
     volume: null
     monitoring_enabled: true

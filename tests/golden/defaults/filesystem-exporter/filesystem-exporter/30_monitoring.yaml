@@ -39,8 +39,8 @@ spec:
           annotations:
             description: Less than 5% free space remains on {{ $labels.path }}.
             summary: filesystem free space is critically low
-          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
-            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+          expr: filesystem_exporter_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
             < 0.05
           for: 15m
           labels:
@@ -51,8 +51,8 @@ spec:
           annotations:
             description: Less than 10% free space remains on {{ $labels.path }}.
             summary: filesystem free space is low
-          expr: filesystem_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
-            / filesystem_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+          expr: filesystem_exporter_path_available_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
+            / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="filesystem-exporter",root_path="/data",path="/data"}
             < 0.1
           for: 15m
           labels:

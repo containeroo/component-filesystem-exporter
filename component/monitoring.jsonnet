@@ -51,7 +51,7 @@ local defaultMonitoringAlerts = {
     },
   },
   FilesystemUsageHigh: {
-    expr: 'filesystem_path_available_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} / filesystem_path_capacity_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} < %s' % [
+    expr: 'filesystem_exporter_path_available_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} < %s' % [
       resourceName,
       filesystemPath,
       filesystemPath,
@@ -70,7 +70,7 @@ local defaultMonitoringAlerts = {
     },
   },
   FilesystemUsageCritical: {
-    expr: 'filesystem_path_available_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} / filesystem_path_capacity_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} < %s' % [
+    expr: 'filesystem_exporter_path_available_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance="%s",root_path="%s",path="%s"} < %s' % [
       resourceName,
       filesystemPath,
       filesystemPath,
@@ -170,17 +170,17 @@ local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashbo
             },
             targets: [
               {
-                expr: 'filesystem_path_used_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
+                expr: 'filesystem_exporter_path_used_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
                 legendFormat: 'used',
                 refId: 'A',
               },
               {
-                expr: 'filesystem_path_available_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
+                expr: 'filesystem_exporter_path_available_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
                 legendFormat: 'available',
                 refId: 'B',
               },
               {
-                expr: 'filesystem_path_capacity_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
+                expr: 'filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
                 legendFormat: 'capacity',
                 refId: 'C',
               },
@@ -243,7 +243,7 @@ local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashbo
             },
             targets: [
               {
-                expr: 'filesystem_path_available_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"} / filesystem_path_capacity_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
+                expr: 'filesystem_exporter_path_available_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"} / filesystem_exporter_path_capacity_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path="/data"}',
                 legendFormat: 'free ratio',
                 refId: 'A',
               },
@@ -298,7 +298,7 @@ local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashbo
             },
             targets: [
               {
-                expr: 'sort_desc(filesystem_path_used_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path!="/data"})',
+                expr: 'sort_desc(filesystem_exporter_path_used_bytes{filesystem_exporter_instance=~"$filesystem_exporter_instance",root_path="/data",path!="/data"})',
                 legendFormat: '{{ path }}',
                 refId: 'A',
               },
@@ -454,7 +454,7 @@ local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashbo
                 type: 'prometheus',
                 uid: '${datasource}',
               },
-              definition: 'label_values(filesystem_path_used_bytes, filesystem_exporter_instance)',
+              definition: 'label_values(filesystem_exporter_path_used_bytes, filesystem_exporter_instance)',
               hide: 0,
               includeAll: false,
               label: 'Instance',
@@ -462,7 +462,7 @@ local grafanaDashboard = com.namespaced(namespaceName, kube.ConfigMap('%s-dashbo
               name: 'filesystem_exporter_instance',
               options: [],
               query: {
-                query: 'label_values(filesystem_path_used_bytes, filesystem_exporter_instance)',
+                query: 'label_values(filesystem_exporter_path_used_bytes, filesystem_exporter_instance)',
                 refId: 'filesystem-exporter-instances',
               },
               refresh: 1,
