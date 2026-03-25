@@ -39,10 +39,20 @@ images:
   exporter:
     registry: ghcr.io
     repository: containeroo/filesystem-exporter
-    tag: v1.0.0
+    tag: v1.1.0
 ----
 
 The container image used for the exporter.
+
+== `report_child_dirs`
+
+[horizontal]
+type:: boolean
+default:: `false`
+
+Controls the exporter flag `-filesystem.report-child-dirs`.
+When set to `true`, the exporter also reports metrics for immediate child directories under `/data`.
+When set to `false`, only the root path is reported.
 
 == `volume`
 

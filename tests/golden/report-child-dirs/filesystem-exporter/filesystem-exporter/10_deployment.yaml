@@ -24,7 +24,7 @@ spec:
       containers:
         - args:
             - -filesystem.path=/data
-            - -filesystem.report-child-dirs=false
+            - -filesystem.report-child-dirs=true
             - -collector.interval=5m
             - -collector.timeout=2m
             - -web.listen-address=:9799
@@ -62,7 +62,5 @@ spec:
       serviceAccountName: filesystem-exporter
       terminationGracePeriodSeconds: 30
       volumes:
-        - name: data
-          nfs:
-            path: /exports/data
-            server: nfs.example.internal
+        - emptyDir: {}
+          name: data

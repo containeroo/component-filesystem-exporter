@@ -22,6 +22,7 @@ local appLabels = {
 };
 local exporterArgs = [
   '-filesystem.path=%s' % filesystemPath,
+  '-filesystem.report-child-dirs=%s' % std.toString(params.report_child_dirs),
   '-collector.interval=5m',
   '-collector.timeout=2m',
   '-web.listen-address=:9799',

@@ -24,11 +24,12 @@ spec:
       containers:
         - args:
             - -filesystem.path=/data
+            - -filesystem.report-child-dirs=false
             - -collector.interval=5m
             - -collector.timeout=2m
             - -web.listen-address=:9799
             - -web.metrics-path=/metrics
-          image: ghcr.io/containeroo/filesystem-exporter:v1.0.0
+          image: ghcr.io/containeroo/filesystem-exporter:v1.1.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
