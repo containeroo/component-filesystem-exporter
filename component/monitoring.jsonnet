@@ -16,38 +16,85 @@ local alertlabels = {
   syn_component: 'filesystem-exporter',
 };
 
+local parseDurationToSeconds(value) =
+  local unit =
+    if std.endsWith(value, 'ms') then
+      'ms'
+    else
+      std.substr(value, std.length(value) - 1, 1);
+  local number =
+    if unit == 'ms' then
+      std.substr(value, 0, std.length(value) - 2)
+    else
+      std.substr(value, 0, std.length(value) - 1);
+  local factor =
+    if unit == 'ms' then
+      0.001
+    else if unit == 's' then
+      1
+    else if unit == 'm' then
+      60
+    else if unit == 'h' then
+      3600
+    else if unit == 'd' then
+      86400
+    else if unit == 'w' then
+      604800
+    else
+      error 'unsupported duration unit in %s' % value;
+  std.floor(std.parseJson(number) * factor + 0.999999);
+
+local formatDuration(seconds) =
+  if seconds % 604800 == 0 then
+    '%dw' % (seconds / 604800)
+  else if seconds % 86400 == 0 then
+    '%dd' % (seconds / 86400)
+  else if seconds % 3600 == 0 then
+    '%dh' % (seconds / 3600)
+  else if seconds % 60 == 0 then
+    '%dm' % (seconds / 60)
+  else
+    '%ds' % seconds;
+
 local formatRatio(value) = '%g' % value;
 local formatPercent(value) = '%g%%' % (value * 100);
+local collectorIntervalSeconds = parseDurationToSeconds(params.collector.interval);
+local collectorTimeoutSeconds = parseDurationToSeconds(params.collector.timeout);
+local collectorBaseSeconds = std.max(collectorIntervalSeconds, collectorTimeoutSeconds);
+local collectionFailureWindowSeconds = collectorBaseSeconds * 2;
+local collectionFailureForSeconds = collectorBaseSeconds * 2;
+local collectionStaleThresholdSeconds = collectorBaseSeconds * 3;
+local collectionStaleForSeconds = collectorBaseSeconds;
 
 local defaultMonitoringAlerts = {
   FilesystemExporterCollectionFailing: {
     expr: 'max_over_time(filesystem_exporter_collect_success{filesystem_exporter_instance="%s",root_path="%s"}[%s]) < 1' % [
       resourceName,
       filesystemPath,
-      '10m',
+      formatDuration(collectionFailureWindowSeconds),
     ],
-    'for': '10m',
+    'for': formatDuration(collectionFailureForSeconds),
     labels: {
       severity: 'warning',
     },
     annotations: {
       summary: 'filesystem-exporter has not completed a successful collection',
-      description: 'filesystem-exporter for {{ $labels.root_path }} has failed every collection for the last 10m.',
+      description: 'filesystem-exporter for {{ $labels.root_path }} has failed every collection for the last %s.' % formatDuration(collectionFailureWindowSeconds),
     },
   },
   FilesystemExporterCollectionStale: {
     expr: 'time() - filesystem_exporter_collect_timestamp_seconds{filesystem_exporter_instance="%s",root_path="%s"} > %d' % [
       resourceName,
       filesystemPath,
-      900,
+      collectionStaleThresholdSeconds,
     ],
-    'for': '5m',
+    'for': formatDuration(collectionStaleForSeconds),
     labels: {
       severity: 'warning',
     },
     annotations: {
       summary: 'filesystem-exporter metrics are stale',
-      description: 'filesystem-exporter for {{ $labels.root_path }} has not produced a fresh collection timestamp for more than 900 seconds.',
+      description: 'filesystem-exporter for {{ $labels.root_path }} has not produced a fresh collection timestamp for more than %d seconds.' % collectionStaleThresholdSeconds,
     },
   },
   FilesystemUsageHigh: {

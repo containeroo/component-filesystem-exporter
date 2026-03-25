@@ -52,6 +52,7 @@ default:: `5m`
 
 Controls the exporter flag `-collector.interval`.
 This defines how often the exporter refreshes filesystem usage data in the background.
+The collection-failure and collection-stale alerts scale from this value.
 
 == `collector.timeout`
 
@@ -61,6 +62,7 @@ default:: `2m`
 
 Controls the exporter flag `-collector.timeout`.
 This defines the timeout for a single collection run.
+If this exceeds `collector.interval`, the collection-failure and collection-stale alerts scale from the timeout instead.
 
 == `report_child_dirs`
 
