@@ -1,3 +1,4 @@
+---
 parameters:
   filesystem_exporter:
     =_metadata:
@@ -8,7 +9,7 @@ parameters:
       exporter:
         registry: ghcr.io
         repository: containeroo/filesystem-exporter
-        tag: v1.3.0
+        tag: v1.3.1
     collector:
       interval: 5m
       timeout: 2m
