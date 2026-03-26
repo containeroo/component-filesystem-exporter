@@ -31,18 +31,19 @@ By default this is `syn-${_instance}`.
 
 [horizontal]
 type:: object
-default::
-+
-[source,yaml]
-----
-images:
-  exporter:
-    registry: ghcr.io
-    repository: containeroo/filesystem-exporter
-    tag: v1.3.0
-----
+default:: see xref:attachment$defaults.yml[`class/defaults.yml`]
 
 The container image used for the exporter.
+
+== `log_level`
+
+[horizontal]
+type:: string
+default:: `info`
+
+Controls the exporter flag `-log.level`.
+Supported values are `debug`, `info`, `warn`, and `error`.
+`debug` enables per-scan lifecycle logging which is useful while tuning or troubleshooting.
 
 == `collector.interval`
 

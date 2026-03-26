@@ -26,11 +26,12 @@ spec:
             - -filesystem.path=/data
             - -filesystem.report-child-dirs=false
             - -filesystem.scan-concurrency=1
+            - -log.level=info
             - -collector.interval=5m
             - -collector.timeout=2m
             - -web.listen-address=:9799
             - -web.metrics-path=/metrics
-          image: ghcr.io/containeroo/filesystem-exporter:v1.3.0
+          image: ghcr.io/containeroo/filesystem-exporter:v1.4.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
