@@ -2,15 +2,4 @@
 
 filesystem-exporter is a Commodore component to manage filesystem-exporter.
 
-The component is multi-instance, so you can deploy multiple exporters in one cluster to watch different filesystem mount points.
-The component renders Kubernetes manifests for the exporter `Deployment`, `Service`, `ServiceMonitor`, `PrometheusRule`, and optionally the target `Namespace`.
-It is intentionally opinionated: probes, resources, service layout, scrape settings, and alert thresholds are hardcoded in Jsonnet instead of exposed as parameters.
-Monitoring follows the same conventions as `component-backup-k8up`, including namespace monitoring labels and rule labels such as `syn: "true"`.
-An optional Grafana dashboard can be rendered as a labeled `ConfigMap` for sidecar-based dashboard discovery.
-The namespace defaults to `syn-${_instance}`.
-Each instance monitors exactly one mounted root path, so the component requires a single `volume` definition and mounts it read-only at `/data`.
-On OpenShift, if you use a direct `nfs` volume, the component creates a dedicated service account and a namespaced `RoleBinding` to the built-in `ClusterRole` `system:openshift:scc:hostmount-anyuid`.
-Applying that binding still requires a sufficiently privileged reconciler, because OpenShift treats granting SCC usage as a privileged operation.
-The component also supports the exporter flag `-filesystem.report-child-dirs` and defaults it to `false`, matching the exporter itself.
-
 See the xref:references/parameters.adoc[parameters] reference for further details.
